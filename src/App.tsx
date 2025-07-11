@@ -1,35 +1,35 @@
-import { useState } from 'react';
-import reactLogo from './assets/react.svg';
-import viteLogo from '/vite.svg';
-import './App.css';
+import { Component } from 'react';
+import { CardList, ErrorButton, Header, Spinner } from './components';
+import { getData, URL } from './api';
+import type { Person, State } from './types/types';
+import styles from './App.module.css';
 
-function App() {
-  const [count, setCount] = useState(0);
+export default class App extends Component {
+  state: State = {
+    isLoading: true,
+    onSearch: async (e) => {
+      this.setState({ isLoading: true });
+      this.setState(await getData<Person>(`${URL}?search=${e}`));
+      this.setState({ isLoading: false, page: 1 });
+    },
+    pageLink: async (page) => {
+      this.setState({ isLoading: true });
+      this.setState(await getData<Person>(page));
+      this.setState({ isLoading: false });
+    },
+  };
+  componentDidMount() {
+    this.state.onSearch(localStorage.getItem('search') ?? '');
+  }
 
-  return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank" rel="noreferrer">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank" rel="noreferrer">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
+  render() {
+    return (
+      <div className={styles.app}>
+        <Header {...this.state} />
+        <CardList {...this.state} />
+        {this.state.isLoading && <Spinner />}
+        <ErrorButton />
       </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  );
+    );
+  }
 }
-
-export default App;

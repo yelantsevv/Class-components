@@ -1,0 +1,11 @@
+@import '../../App.module.css';
+
+.cardList {
+  width: 100%;
+}
+
+.pagination {
+  composes: btn;
+  cursor: auto;
+  padding: 0;
+}
