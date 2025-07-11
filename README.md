@@ -1,6 +1,9 @@
-# [Class-components](https://yelantsevv.github.io/Class-components/)
+# [Deploy Class-components](https://yelantsevv.github.io/Class-components/)
+### [Task Class-components](https://github.com/rolling-scopes-school/tasks/blob/master/react/modules/tasks/class-components.md)
+
 
 React project setup. Class components. Error boundary.
+
 
   ⚙️ Technologies Used:
  - `React 19.1`
