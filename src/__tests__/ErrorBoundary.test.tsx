@@ -4,7 +4,7 @@ import React from 'react';
 
 class ErrorComponent extends React.Component {
   render() {
-    throw new Error('Test error');
+    throw new Error('ErrorBoundary test check');
     return null;
   }
 }
@@ -35,7 +35,9 @@ describe('ErrorBoundary', () => {
       </ErrorBoundary>
     );
 
-    expect(screen.getByRole('heading')).toHaveTextContent('Test error');
+    expect(screen.getByRole('heading')).toHaveTextContent(
+      'ErrorBoundary test check'
+    );
     expect(screen.getByRole('button', { name: /reset/i })).toBeInTheDocument();
   });
 
