@@ -11,10 +11,10 @@ export default defineConfig({
     setupFiles: ['./src/__tests__/setup.ts'],
     coverage: {
       thresholds: {
-        // statements: 80,
-        // branches: 50,
-        // functions: 50,
-        // lines: 50,
+        statements: 80,
+        branches: 50,
+        functions: 50,
+        lines: 50,
       },
       include: ['src/**/*.{js,jsx,ts,tsx}'],
       exclude: [
