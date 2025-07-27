@@ -1,32 +1,33 @@
 import { render, screen } from '@testing-library/react';
-import Card from '../components/Card/Card';
-import { mockResults } from './mockData';
-import type { CardType } from '../types/types';
+import { MemoryRouter } from 'react-router';
+import Card from '../components/Card/Card.tsx';
+import { mockResults } from './mockData.ts';
 
-vi.mock('../components', async () => {
-  return {
-    Film: ({ film }: { film: string }) => (
-      <li data-testid="mock-film">{film}</li>
-    ),
-  };
-});
-
-describe('Card component', () => {
+describe('Card Component', () => {
   beforeEach(() => {
-    render(<Card {...(mockResults as CardType)} />);
+    render(
+      <MemoryRouter>
+        <Card {...mockResults} />
+      </MemoryRouter>
+    );
   });
 
-  it('renders character info correctly', () => {
+  it('renders with provided props', () => {
+    const nameElement = screen.getByTestId('name');
+    expect(nameElement.tagName).toBe('B');
     expect(screen.getByText(mockResults.name)).toBeInTheDocument();
-    expect(screen.getByText(/gender: male/i)).toBeInTheDocument();
-    expect(screen.getByText(/height: 172/i)).toBeInTheDocument();
-    expect(screen.getByText(/mass: 77/i)).toBeInTheDocument();
+    expect(
+      screen.getByText(`gender: ${mockResults.gender}`)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`height: ${mockResults.height}`)
+    ).toBeInTheDocument();
+    expect(screen.getByText(`mass: ${mockResults.mass}`)).toBeInTheDocument();
   });
 
-  it('renders film titles as Film components', () => {
-    const films = screen.getAllByTestId('mock-film');
-    expect(films).toHaveLength(mockResults.films.length);
-    expect(films[0]).toHaveTextContent(mockResults.films[0]);
-    expect(films[1]).toHaveTextContent(mockResults.films[1]);
+  it('renders correct NavLink path', () => {
+    const linkElement = screen.getByRole('link');
+    expect(linkElement).toHaveAttribute('href');
+    expect(linkElement.tagName).toBe('A');
   });
 });

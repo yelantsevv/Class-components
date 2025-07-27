@@ -1,27 +1,21 @@
-import { Component } from 'react';
+import { useState } from 'react';
 import styles from './ErrorButton.module.css';
+import { type StateError } from '../../types/types';
 
-export default class ErrorButton extends Component {
-  state = {
-    hasError: false,
-    error: null,
-  };
+export default function ErrorButton() {
+  const [state, setState] = useState<StateError>({ error: null });
 
-  throwError = () =>
-    this.setState({
-      hasError: true,
-      error: 'Triggered Error',
-    });
-
-  render() {
-    if (this.state.hasError) {
-      throw new Error(`Error Boundary: ${this.state.error}`);
-    }
-
-    return (
-      <button className={styles.error} onClick={() => this.throwError()}>
-        Error Button
-      </button>
-    );
+  function throwError() {
+    setState({ error: new Error('Triggered Error') });
   }
+
+  if (state.error) {
+    throw new Error(`Error Boundary: ${state.error.message}`);
+  }
+
+  return (
+    <button className={styles.error} onClick={() => throwError()}>
+      Error Button
+    </button>
+  );
 }

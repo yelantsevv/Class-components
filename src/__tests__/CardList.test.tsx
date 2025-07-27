@@ -2,27 +2,32 @@ import { render, screen } from '@testing-library/react';
 import CardList from '../components/CardList/CardList';
 import { mockResults, mockState } from './mockData';
 
-vi.mock('../components', async () => ({
-  Card: ({ name }: { name: string }) => <div data-testid="card">{name}</div>,
+vi.mock('../components/Card/Card.tsx', () => ({
+  default: vi.fn(() => <div data-testid="card" />),
+}));
+vi.mock('../components/Spinner/Spinner.tsx', () => ({
+  default: vi.fn(() => <div data-testid="spinner" />),
 }));
 
-describe('CardList component', () => {
-  it('renders "No results" when results is empty', () => {
-    render(<CardList {...mockState} results={[]} />);
-    expect(screen.getByText(/no results/i)).toBeInTheDocument();
+describe('CardList Component', () => {
+  it('renders a spinner when loading', () => {
+    render(<CardList {...mockState} isLoading={true} />);
+    expect(screen.getByTestId('spinner')).toBeInTheDocument();
   });
 
-  it('renders cards when results are present and not loading', () => {
-    render(<CardList {...mockState} results={[mockResults]} />);
-    const cards = screen.getAllByTestId('card');
-    expect(cards).toHaveLength(1);
-    expect(cards[0]).toHaveTextContent('Luke');
+  it('renders no results message when results are empty', () => {
+    render(<CardList {...mockState} results={[]} isLoading={false} />);
+    expect(screen.getByText('No results')).toBeInTheDocument();
   });
 
-  it('does not render cards when isLoading is true', () => {
+  it('renders a list of cards when results are provided', () => {
     render(
-      <CardList {...mockState} isLoading={true} results={[mockResults]} />
+      <CardList
+        {...mockState}
+        isLoading={false}
+        results={[mockResults, mockResults]}
+      />
     );
-    expect(screen.queryByTestId('card')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId('card')).toHaveLength(2);
   });
 });

@@ -1,39 +1,56 @@
-import { Component } from 'react';
+import { useEffect, useState } from 'react';
 import { getData } from '../../api';
-import type { Films, FilmType } from '../../types/types';
+import type { Films } from '../../types/types';
 import styles from './Film.module.css';
+import clsx from 'clsx';
 
-export default class Film extends Component<FilmType> {
-  state: { filmData: Films | undefined } = { filmData: undefined };
+const TextError = 'Ops something went wrong';
 
-  async getFilm(link: string) {
-    if (this.props.state.has(link)) {
-      if (this.props.state.get(link) === 'loading') {
-        setTimeout(() => this.getFilm(link), 300);
-        return;
-      }
-      this.setState({ filmData: this.props.state.get(link) });
-    } else {
-      this.props.state.set(link, 'loading');
-      const rez = await getData<Films>(link);
-      this.props.state.set(link, rez);
-      this.setState({ filmData: rez });
-    }
-  }
+export default function Film({ film }: { film: string }) {
+  const [filmData, setFilmData] = useState<Films>();
 
-  componentDidMount() {
-    this.getFilm(this.props.film);
-  }
+  useEffect(() => {
+    getData<Films>(film)
+      .then(setFilmData)
+      .catch(() => {
+        setFilmData({
+          title: TextError,
+        } as Films);
+      });
+  }, [film]);
 
-  render() {
-    const { filmData } = this.state;
+  if (!filmData || filmData?.title == TextError) {
     return (
-      <li
-        className={filmData?.title ? '' : styles.loading}
-        title={filmData?.opening_crawl}
+      <div
+        data-testid="loading-film"
+        className={clsx(
+          styles.title,
+          filmData?.title != TextError && styles.loading
+        )}
       >
-        {filmData?.title}
-      </li>
+        <p className={styles.ups}>{filmData?.title}</p>
+      </div>
     );
   }
+
+  return (
+    <div className={styles.title}>
+      <h2>{filmData.title}</h2>
+      <p>
+        <b>Director </b>:{filmData.director}
+      </p>
+      <p>
+        <b>Producer </b>:{filmData.producer}
+      </p>
+      <p>
+        <b>release </b>:{filmData.release_date}
+      </p>
+      <p>
+        <b>characters </b>:{filmData?.characters?.length}
+      </p>
+      <p>
+        <b>planets </b>:{filmData.opening_crawl}
+      </p>
+    </div>
+  );
 }

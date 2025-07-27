@@ -1,53 +1,58 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import App from '../App';
-import * as api from '../api';
-import { mockPerson } from './mockData';
+import { MemoryRouter } from 'react-router';
+import { getData } from '../api';
+import { mockState } from './mockData';
 
-vi.mock('../components', async () => ({
+vi.mock('../components', () => ({
   Header: () => <div data-testid="header" />,
-  CardList: () => <div data-testid="cardlist" />,
-  Spinner: () => <div data-testid="spinner" />,
-  ErrorButton: () => <button data-testid="error-button">Error</button>,
+  CardList: () => <div data-testid="card-list" />,
+  ErrorButton: () => <div data-testid="error-button" />,
 }));
 
-describe('App component', () => {
+vi.mock('../api', () => ({
+  getData: vi.fn(),
+  URL: 'https://swapi.dev/api/people/',
+}));
+
+const mockNavigate = vi.fn();
+vi.mock('react-router', async () => {
+  const actual =
+    await vi.importActual<typeof import('react-router')>('react-router');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
+
+vi.mock('../hooks/useLocaleStorage', () => ({
+  useLocalStorage: vi.fn(() => ['?search=skywalker', vi.fn()]),
+}));
+
+describe('App Component', () => {
   beforeEach(() => {
-    vi.spyOn(api, 'getData').mockResolvedValue(mockPerson);
-    localStorage.setItem('search', 'Luke');
+    vi.clearAllMocks();
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-    localStorage.clear();
-  });
+  it('should render App with data loading and call pageLink', async () => {
+    (getData as ReturnType<typeof vi.fn>).mockResolvedValueOnce(mockState);
 
-  it('calls getData with search from localStorage on mount', async () => {
-    render(<App />);
-    expect(screen.getByTestId('spinner')).toBeInTheDocument();
+    render(
+      <MemoryRouter>
+        <App />
+      </MemoryRouter>
+    );
 
     await waitFor(() => {
-      expect(api.getData).toHaveBeenCalledWith(`${api.URL}?search=Luke`);
+      expect(getData).toHaveBeenCalledWith(
+        'https://swapi.dev/api/people/?search=skywalker'
+      );
     });
-  });
 
-  it('renders Header and CardList after loading', async () => {
-    render(<App />);
+    expect(mockNavigate).toHaveBeenCalledWith('?search=skywalker');
 
-    await waitFor(() => {
-      expect(screen.getByTestId('header')).toBeInTheDocument();
-      expect(screen.getByTestId('cardlist')).toBeInTheDocument();
-    });
-  });
-
-  it('shows Spinner when loading is true', () => {
-    render(<App />);
-    expect(screen.getByTestId('spinner')).toBeInTheDocument();
-  });
-
-  it('renders ErrorButton', async () => {
-    render(<App />);
-    await waitFor(() => {
-      expect(screen.getByTestId('error-button')).toBeInTheDocument();
-    });
+    expect(screen.getByTestId('header')).toBeInTheDocument();
+    expect(screen.getByTestId('card-list')).toBeInTheDocument();
+    expect(screen.getByTestId('error-button')).toBeInTheDocument();
   });
 });

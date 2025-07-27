@@ -1,35 +1,45 @@
-import { Component } from 'react';
-import { CardList, ErrorButton, Header, Spinner } from './components';
+import { useEffect, useRef, useState } from 'react';
+import { CardList, ErrorButton, Header } from './components';
 import { getData, URL } from './api';
 import type { Person, State } from './types/types';
 import styles from './App.module.css';
-
-export default class App extends Component {
-  state: State = {
+import { useLocalStorage } from './hooks/useLocaleStorage';
+import { Outlet, useNavigate } from 'react-router';
+export default function App() {
+  const [valueStorage, setStorage] = useLocalStorage('search');
+  const navigate = useRef(useNavigate());
+  const [state, setState] = useState<State>({
     isLoading: true,
-    onSearch: async (e) => {
-      this.setState({ isLoading: true });
-      this.setState(await getData<Person>(`${URL}?search=${e}`));
-      this.setState({ isLoading: false, page: 1 });
+    results: [],
+    pageLink: async (page: string) => {
+      setState((prev) => ({ ...prev, isLoading: true }));
+      const data = await getData<Person>(URL + page);
+      setState((prev) => ({ ...prev, ...data, isLoading: false }));
+      setStorage(page);
     },
-    pageLink: async (page) => {
-      this.setState({ isLoading: true });
-      this.setState(await getData<Person>(page));
-      this.setState({ isLoading: false });
+    onSearch: (e: string) => {
+      setState((prev) => ({ ...prev, isLoading: true }));
+      getData<Person>(URL + '?search=' + e).then((data) => {
+        setState((prev) => ({ ...prev, ...data, isLoading: false }));
+        setStorage('?search=' + e);
+      });
     },
-  };
-  componentDidMount() {
-    this.state.onSearch(localStorage.getItem('search') ?? '');
-  }
+  });
 
-  render() {
-    return (
+  const { pageLink } = state;
+  useEffect(() => {
+    pageLink(valueStorage);
+    navigate.current(valueStorage);
+  }, [pageLink, valueStorage]);
+
+  return (
+    <>
       <div className={styles.app}>
-        <Header {...this.state} />
-        <CardList {...this.state} />
-        {this.state.isLoading && <Spinner />}
+        <Header {...state} />
+        <CardList {...state} />
         <ErrorButton />
       </div>
-    );
-  }
+      <Outlet />
+    </>
+  );
 }

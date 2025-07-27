@@ -1,39 +1,60 @@
-import { render, screen, fireEvent } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import Paginator from '../components/Paginator/Paginator';
-import { mockState } from './mockData';
+import { MemoryRouter } from 'react-router';
+import { mockPerson, mockState } from './mockData';
+import { act } from 'react';
 
-describe('Paginator', () => {
-  it('renders two buttons: prev and next', () => {
-    render(<Paginator {...mockState} />);
-    expect(screen.getByText('prev')).toBeInTheDocument();
-    expect(screen.getByText('next')).toBeInTheDocument();
-  });
+vi.mock('../helpers', () => ({
+  helper: {
+    useSearchParams: vi.fn(() => ({ search: 'testSearch' })),
+  },
+}));
 
-  it('calls pageLink with correct previous link when prev is clicked', () => {
-    const mockPageLink = vi.fn();
-    render(
-      <Paginator {...mockState} pageLink={mockPageLink} previous="prev" />
+const pageLinkMock = vi.fn();
+const renderWithRouter = (ui: React.ReactElement) => {
+  return render(<MemoryRouter>{ui}</MemoryRouter>);
+};
+
+describe('Paginator component', () => {
+  it('renders the paginator component', () => {
+    renderWithRouter(
+      <Paginator
+        {...mockState}
+        count={30}
+        previous={null}
+        next={null}
+        pageLink={pageLinkMock}
+      />
     );
-
-    fireEvent.click(screen.getByText('prev'));
-    expect(mockPageLink).toHaveBeenCalledWith('prev');
+    const paginator = screen.getByTestId('paginator');
+    expect(paginator).toBeInTheDocument();
   });
 
-  it('calls pageLink with correct previous link when next is clicked', () => {
-    const mockPageLink = vi.fn();
-    render(<Paginator {...mockState} pageLink={mockPageLink} next="next" />);
-
-    fireEvent.click(screen.getByText('next'));
-    expect(mockPageLink).toHaveBeenCalledWith('next');
+  it('renders the correct number of page links', () => {
+    renderWithRouter(
+      <Paginator {...mockState} {...mockPerson} pageLink={pageLinkMock} />
+    );
+    const pageLinks = screen.getAllByRole('link');
+    expect(pageLinks).toHaveLength(3);
   });
 
-  it('disables "prev" button when no previous link', () => {
-    render(<Paginator {...mockState} previous={null} />);
-    expect(screen.getByText('prev')).toBeDisabled();
-  });
+  it('calls pageLink function on page click', async () => {
+    renderWithRouter(
+      <Paginator
+        {...mockState}
+        count={30}
+        previous={null}
+        next={null}
+        pageLink={pageLinkMock}
+      />
+    );
+    const pageTwo = screen.getByText('2');
 
-  it('disables "next" button when no next link', () => {
-    render(<Paginator {...mockState} next={null} />);
-    expect(screen.getByText('next')).toBeDisabled();
+    await act(async () => {
+      fireEvent.click(pageTwo);
+    });
+    await waitFor(() => {
+      expect(pageLinkMock).toHaveBeenCalledWith('?search=testSearch&page=2');
+    });
   });
 });

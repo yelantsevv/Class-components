@@ -6,6 +6,12 @@ export const mockResults: Results = {
   gender: 'male',
   height: '172',
   mass: '77',
+  skin_color: 'fair',
+  eye_color: 'blue',
+  birth_year: '19BBY',
+  hair_color: 'blond',
+  url: '',
+  error: '',
 };
 
 export const mockPerson: Person = {
@@ -21,7 +27,7 @@ export const mockState: State = {
   onSearch: vi.fn(),
 };
 
-export const mockFilms: Films = {
+export const mockFilms: Partial<Films> = {
   title: 'The Empire Strikes Back',
   opening_crawl: 'It is a dark time for the Luke...',
 };

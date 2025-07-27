@@ -1,34 +1,38 @@
-import { Component, type ChangeEvent, type FormEvent } from 'react';
+import { type FormEvent, useRef } from 'react';
+import { useNavigate } from 'react-router';
 import type { State } from '../../types/types';
 import styles from './Search.module.css';
+import { helper } from '../../helpers';
 
-export default class Search extends Component<State> {
-  state = { inputValue: '' };
-  placeholder = localStorage.getItem('search') || 'Search...';
+export default function Search({ pageLink }: State) {
+  const navigate = useNavigate();
+  const { search } = helper.useSearchParams();
+  const inputRef = useRef<HTMLInputElement>(null);
 
-  handleChange = (e: ChangeEvent<HTMLInputElement>) =>
-    this.setState({ inputValue: e.target.value });
-
-  handleSubmit = (e: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    this.props.onSearch(this.state.inputValue);
-    localStorage.setItem('search', this.state.inputValue);
-    this.placeholder = 'Search...';
+    const inputValue = inputRef.current?.value || '';
+    pageLink(`?search=${inputValue}`);
+    navigate(`?search=${inputValue}`);
   };
-  render() {
-    return (
-      <form className={styles.search} onSubmit={this.handleSubmit}>
-        <input
-          className={styles.input}
-          type="text"
-          value={this.state.inputValue}
-          onChange={this.handleChange}
-          placeholder={this.placeholder}
-        />
-        <button className={styles.button} type="submit">
-          Search
-        </button>
-      </form>
-    );
-  }
+
+  return (
+    <form
+      data-testid=" search"
+      className={styles.search}
+      onSubmit={handleSubmit}
+    >
+      <input
+        className={styles.input}
+        type="text"
+        ref={inputRef}
+        placeholder="Search..."
+        defaultValue={search}
+        data-testid="input"
+      />
+      <button className={styles.button} type="submit">
+        Search
+      </button>
+    </form>
+  );
 }

@@ -1,71 +1,50 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import Search from '../components/Search/Search';
+import { mockState } from './mockData';
+
+const pageLinkMock = vi.fn();
+const navigateMock = vi.fn(() => Promise.resolve());
+
+const props = {
+  ...mockState,
+  pageLink: pageLinkMock,
+};
+beforeEach(() => {
+  vi.mock('../helpers', () => ({
+    helper: {
+      useSearchParams: vi.fn(() => ({ search: 'testSearch' })),
+    },
+  }));
+
+  vi.mock('react-router', () => ({
+    useNavigate: () => navigateMock,
+  }));
+  render(<Search {...props} />);
+});
 
 describe('Search', () => {
-  const mockOnSearch = vi.fn();
+  it('renders the search form correctly', () => {
+    const input = screen.getByPlaceholderText('Search...');
+    const button = screen.getByText('Search');
 
-  beforeEach(() => {
-    mockOnSearch.mockClear();
-    localStorage.clear();
+    expect(input).toBeInTheDocument();
+    expect(button).toBeInTheDocument();
+    expect(button.className).toMatch(/button/);
   });
 
-  it('renders input with default placeholder from localStorage or fallback', () => {
-    render(
-      <Search
-        isLoading={false}
-        onSearch={mockOnSearch}
-        results={[]}
-        pageLink={() => {}}
-      />
-    );
-    const input = screen.getByRole('textbox') as HTMLInputElement;
-    expect(input.placeholder).toBe('Search...');
+  it('uses the initial search value', () => {
+    const input = screen.getByTestId('input');
+    expect(input.getAttribute('value')).toBe('testSearch');
   });
 
-  it('uses placeholder from localStorage if exists', () => {
-    localStorage.setItem('search', 'Luke');
-    render(
-      <Search
-        isLoading={false}
-        onSearch={mockOnSearch}
-        results={[]}
-        pageLink={() => {}}
-      />
-    );
-    const input = screen.getByRole('textbox') as HTMLInputElement;
-    expect(input.placeholder).toBe('Luke');
-  });
+  it('does navigate or call pageLink if the input is empty', () => {
+    const input = screen.getByTestId('input');
+    const button = screen.getByText('Search');
 
-  it('updates input value when typing', () => {
-    render(
-      <Search
-        isLoading={false}
-        onSearch={mockOnSearch}
-        results={[]}
-        pageLink={() => {}}
-      />
-    );
-    const input = screen.getByRole('textbox') as HTMLInputElement;
-    fireEvent.change(input, { target: { value: 'Yoda' } });
-    expect(input.value).toBe('Yoda');
-  });
-
-  it('calls onSearch with input value on submit and saves to localStorage', () => {
-    render(
-      <Search
-        isLoading={false}
-        onSearch={mockOnSearch}
-        results={[]}
-        pageLink={() => {}}
-      />
-    );
-    const input = screen.getByRole('textbox') as HTMLInputElement;
-    const button = screen.getByRole('button', { name: 'Search' });
-
-    fireEvent.change(input, { target: { value: 'Obi-Wan' } });
+    fireEvent.change(input, { target: { value: '' } });
     fireEvent.click(button);
 
-    expect(mockOnSearch).toHaveBeenCalledWith('Obi-Wan');
-    expect(localStorage.getItem('search')).toBe('Obi-Wan');
+    expect(pageLinkMock).toHaveBeenCalled();
+    expect(navigateMock).toHaveBeenCalled();
   });
 });

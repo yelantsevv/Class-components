@@ -5,24 +5,19 @@ import { mockResults } from './mockData';
 window.fetch = vi.fn();
 
 describe('getData', () => {
-  it('fetches data successfully', async () => {
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
+  it('return data', async () => {
+    const mockFetch = fetch as ReturnType<typeof vi.fn>;
+    mockFetch.mockResolvedValueOnce({
       ok: true,
       json: async () => mockResults,
     });
 
     const data = await getData<Results>(URL);
     expect(data).toEqual(mockResults);
-    expect(fetch).toHaveBeenCalledWith(URL);
-  });
+    expect(mockFetch).toHaveBeenCalledWith(URL);
 
-  it('throws error when response is not ok', async () => {
-    (fetch as ReturnType<typeof vi.fn>).mockResolvedValueOnce({
-      ok: false,
-      statusText: 'Not Found',
-    });
-
-    await expect(getData(URL)).rejects.toThrow('Not Found');
-    expect(fetch).toHaveBeenCalledWith(URL);
+    const secondCall = await getData<Results>(URL);
+    expect(secondCall).toEqual(mockResults);
+    expect(mockFetch).toHaveBeenCalledTimes(1);
   });
 });

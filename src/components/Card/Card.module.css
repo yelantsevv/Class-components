@@ -5,6 +5,17 @@
   cursor: auto;
   text-align: left;
   display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 1rem;
+
+  & > * {
+    width: 120px;
+  }
+
+  & > *:first-child {
+    width: 150px;
+  }
 
   &:hover {
     background-color: inherit;
