@@ -1,45 +1,47 @@
-import { useEffect, useRef, useState } from 'react';
-import { CardList, ErrorButton, Header } from './components';
-import { getData, URL } from './api';
-import type { Person, State } from './types/types';
-import styles from './App.module.css';
-import { useLocalStorage } from './hooks/useLocaleStorage';
+import { useEffect } from 'react';
 import { Outlet, useNavigate } from 'react-router';
-export default function App() {
-  const [valueStorage, setStorage] = useLocalStorage('search');
-  const navigate = useRef(useNavigate());
-  const [state, setState] = useState<State>({
-    isLoading: true,
-    results: [],
-    pageLink: async (page: string) => {
-      setState((prev) => ({ ...prev, isLoading: true }));
-      const data = await getData<Person>(URL + page);
-      setState((prev) => ({ ...prev, ...data, isLoading: false }));
-      setStorage(page);
-    },
-    onSearch: (e: string) => {
-      setState((prev) => ({ ...prev, isLoading: true }));
-      getData<Person>(URL + '?search=' + e).then((data) => {
-        setState((prev) => ({ ...prev, ...data, isLoading: false }));
-        setStorage('?search=' + e);
-      });
-    },
-  });
+import styles from './App.module.css';
+import {
+  CardList,
+  ErrorButton,
+  Paginator,
+  Search,
+  Selected,
+} from './components';
+import { useLocalStorage, useTheme } from './hooks';
+import { helper } from './helpers';
 
-  const { pageLink } = state;
+export default function App() {
+  const navigate = useNavigate();
+  const [query] = useLocalStorage('query');
+  const { search, page } = helper.useSearchParams();
   useEffect(() => {
-    pageLink(valueStorage);
-    navigate.current(valueStorage);
-  }, [pageLink, valueStorage]);
+    if (search || page !== '1') return;
+    navigate(query);
+    // eslint-disable-next-line
+  }, []);
+
+  const { theme, toggleTheme } = useTheme();
 
   return (
-    <>
+    <div data-testid="theme" className={styles[theme]}>
+      <button
+        data-testid="theme-btn"
+        className={styles.themeBtn}
+        onClick={toggleTheme}
+      >
+        {theme}
+      </button>
       <div className={styles.app}>
-        <Header {...state} />
-        <CardList {...state} />
+        <div className={styles.header}>
+          <Search />
+          <Paginator />
+        </div>
+        <CardList />
         <ErrorButton />
+        <Selected />
       </div>
       <Outlet />
-    </>
+    </div>
   );
 }

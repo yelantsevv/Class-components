@@ -1,15 +1,10 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-import Card from '../components/Card/Card.tsx';
+import { Card } from '../components';
 import { mockResults } from './mockData.ts';
+import { mockRouter } from './mockRouter.tsx';
 
 describe('Card Component', () => {
   beforeEach(() => {
-    render(
-      <MemoryRouter>
-        <Card {...mockResults} />
-      </MemoryRouter>
-    );
+    mockRouter(<Card {...mockResults} />);
   });
 
   it('renders with provided props', () => {
@@ -29,5 +24,18 @@ describe('Card Component', () => {
     const linkElement = screen.getByRole('link');
     expect(linkElement).toHaveAttribute('href');
     expect(linkElement.tagName).toBe('A');
+  });
+
+  it('click on checkbox', () => {
+    const checkbox = screen.getByTestId('checkbox');
+    expect(checkbox).toBeInTheDocument();
+    expect(checkbox).not.toBeChecked();
+    fireEvent.click(checkbox);
+    expect(checkbox).toBeChecked();
+    fireEvent.keyDown(checkbox, {
+      key: 'Enter',
+      code: 'Enter',
+    });
+    expect(checkbox).not.toBeChecked();
   });
 });

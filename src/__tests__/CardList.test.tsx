@@ -1,33 +1,50 @@
-import { render, screen } from '@testing-library/react';
-import CardList from '../components/CardList/CardList';
-import { mockResults, mockState } from './mockData';
+import { CardList } from '../components';
+import { mockRouter } from './mockRouter.tsx';
+import { useGetPeopleListQuery } from '../store/Redux/api';
+
+vi.mock(
+  '../store/Redux/api',
+  async (
+    importOriginal: () => Promise<typeof import('../store/Redux/api')>
+  ) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      useGetPeopleListQuery: vi.fn(),
+    };
+  }
+);
 
 vi.mock('../components/Card/Card.tsx', () => ({
   default: vi.fn(() => <div data-testid="card" />),
 }));
-vi.mock('../components/Spinner/Spinner.tsx', () => ({
-  default: vi.fn(() => <div data-testid="spinner" />),
-}));
 
 describe('CardList Component', () => {
-  it('renders a spinner when loading', () => {
-    render(<CardList {...mockState} isLoading={true} />);
-    expect(screen.getByTestId('spinner')).toBeInTheDocument();
-  });
+  it('renders a list of cards when No results', async () => {
+    vi.mocked(useGetPeopleListQuery).mockReturnValueOnce({
+      data: { results: [] },
+    } as unknown as ReturnType<typeof useGetPeopleListQuery>);
 
-  it('renders no results message when results are empty', () => {
-    render(<CardList {...mockState} results={[]} isLoading={false} />);
+    mockRouter(<CardList />);
+
     expect(screen.getByText('No results')).toBeInTheDocument();
   });
 
-  it('renders a list of cards when results are provided', () => {
-    render(
-      <CardList
-        {...mockState}
-        isLoading={false}
-        results={[mockResults, mockResults]}
-      />
-    );
-    expect(screen.getAllByTestId('card')).toHaveLength(2);
+  it('renders a spinner when loading', () => {
+    vi.mocked(useGetPeopleListQuery).mockReturnValueOnce({
+      isFetching: true,
+    } as unknown as ReturnType<typeof useGetPeopleListQuery>);
+    mockRouter(<CardList />);
+    expect(screen.getByTestId('spinner')).toBeInTheDocument();
+  });
+
+  it('renders no results error: true', async () => {
+    vi.mocked(useGetPeopleListQuery).mockReturnValueOnce({
+      error: { status: 404 },
+    } as unknown as ReturnType<typeof useGetPeopleListQuery>);
+    mockRouter(<CardList />);
+
+    expect(screen.getByTestId('error')).toBeInTheDocument();
+    expect(screen.getByText('Ops, something went wrong')).toBeInTheDocument();
   });
 });

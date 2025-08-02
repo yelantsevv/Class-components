@@ -1,55 +1,46 @@
-import { useEffect, useState } from 'react';
-import { getData } from '../../api';
-import type { Films } from '../../types/types';
 import styles from './Film.module.css';
 import clsx from 'clsx';
-
-const TextError = 'Ops something went wrong';
+import { useGetFilmQuery } from '../../store/Redux/api';
+import type { FetchBaseQueryError } from '@reduxjs/toolkit/query';
 
 export default function Film({ film }: { film: string }) {
-  const [filmData, setFilmData] = useState<Films>();
+  const { data, isLoading, error } = useGetFilmQuery(film);
 
-  useEffect(() => {
-    getData<Films>(film)
-      .then(setFilmData)
-      .catch(() => {
-        setFilmData({
-          title: TextError,
-        } as Films);
-      });
-  }, [film]);
-
-  if (!filmData || filmData?.title == TextError) {
+  if (isLoading) {
     return (
       <div
         data-testid="loading-film"
-        className={clsx(
-          styles.title,
-          filmData?.title != TextError && styles.loading
-        )}
-      >
-        <p className={styles.ups}>{filmData?.title}</p>
+        className={clsx(styles.title, styles.loading)}
+      ></div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div data-testid="loading-film" className={styles.title}>
+        <p className={styles.ups}>{(error as FetchBaseQueryError).status}</p>
+        <p className={styles.ups}>Ops something went wrong</p>
       </div>
     );
   }
 
   return (
     <div className={styles.title}>
-      <h2>{filmData.title}</h2>
+      <h2>{data?.title}</h2>
       <p>
-        <b>Director </b>:{filmData.director}
+        <b>Director</b>: {data?.director}
       </p>
       <p>
-        <b>Producer </b>:{filmData.producer}
+        <b>Producer</b>: {data?.producer}
       </p>
       <p>
-        <b>release </b>:{filmData.release_date}
+        <b>release</b>: {data?.release_date}
       </p>
       <p>
-        <b>characters </b>:{filmData?.characters?.length}
+        <b>characters</b>: {data?.characters?.length}
       </p>
       <p>
-        <b>planets </b>:{filmData.opening_crawl}
+        <b>planets</b>: {data?.opening_crawl}
       </p>
     </div>
   );

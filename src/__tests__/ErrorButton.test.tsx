@@ -1,20 +1,29 @@
-import { render, screen, fireEvent } from '@testing-library/react';
-import ErrorButton from '../components/ErrorButton/ErrorButton';
+import { ErrorButton } from '../components';
+import { mockRouter } from './mockRouter';
 
-describe('ErrorButton', () => {
-  it('renders the button', () => {
-    render(<ErrorButton />);
-    expect(screen.getByText(/error button/i)).toBeInTheDocument();
+describe('ErrorButton Component', () => {
+  it('renders correctly', () => {
+    mockRouter(<ErrorButton />);
+    const button = screen.getByText('Error Button');
+    expect(button).toBeInTheDocument();
   });
 
-  it('throws error with correct message', () => {
-    const errorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+  it('throws an error when clicked', () => {
+    console.error = vi.fn();
+    mockRouter(<ErrorButton />);
 
-    expect(() => {
-      render(<ErrorButton />);
-      fireEvent.click(screen.getByText(/error button/i));
-    }).toThrow('Error Boundary: Triggered Error');
+    const button = screen.getByText('Error Button');
+    fireEvent.click(button);
 
-    errorSpy.mockRestore();
+    expect(
+      screen.getByText('Error Boundary: Triggered Error')
+    ).toBeInTheDocument();
+
+    const resetBtn = screen.getByTestId('reset');
+    expect(resetBtn.textContent).toBe('Reset');
+    expect(resetBtn).toBeInTheDocument();
+    fireEvent.click(resetBtn);
+    expect(resetBtn).not.toBeInTheDocument();
+    expect(console.error).toHaveBeenCalled();
   });
 });

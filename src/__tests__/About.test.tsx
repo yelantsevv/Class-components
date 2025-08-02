@@ -1,92 +1,55 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-import About from '../components/About/About';
-import { getData } from '../api';
+import { About } from '../components';
 import { mockResults } from './mockData';
+import { mockRouter } from './mockRouter';
+import { useGetPeopleQuery } from '../store/Redux/api';
 
-vi.mock('../api', () => ({
-  getData: vi.fn(),
-  URL: 'https://swapi.dev/api/people/1/',
-}));
+vi.mock(
+  '../store/Redux/api',
+  async (
+    importOriginal: () => Promise<typeof import('../store/Redux/api')>
+  ) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      useGetPeopleQuery: vi.fn(),
+    };
+  }
+);
 
 vi.mock('../components/Film/Film', () => ({
-  default: vi.fn(({ film }) => <div data-testid="film">{film}</div>),
+  default: vi.fn(() => <div data-testid="film-component" />),
 }));
-
-vi.mock('../components/Spinner/Spinner', () => ({
-  default: () => <div data-testid="spinner">Loading...</div>,
-}));
-
-vi.mock('../helpers', () => ({
-  helper: {
-    useParams: vi.fn().mockReturnValue('1'),
-    query: vi.fn().mockReturnValue('?search=test'),
-  },
-}));
-
-const mockNavigate = vi.fn();
-vi.mock('react-router', async () => {
-  const actual =
-    await vi.importActual<typeof import('react-router')>('react-router');
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
 
 describe('About Component', () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
+  it('should render loading spinner', () => {
+    vi.mocked(useGetPeopleQuery).mockReturnValueOnce({
+      isLoading: true,
+    } as unknown as ReturnType<typeof useGetPeopleQuery>);
+    mockRouter(<About />);
+    const about = screen.getByTestId('about-loading');
+    expect(about).toBeInTheDocument();
+    expect(about.tagName).toBe('DIV');
+    expect(about.className).toMatch(/container/);
+    const links = screen.getAllByRole('link');
+    expect(links.length).toBe(2);
+    expect(screen.getByTestId('spinner')).toBeInTheDocument();
   });
 
-  it('spinner', async () => {
-    vi.mocked(getData).mockResolvedValueOnce(undefined);
-
-    render(
-      <MemoryRouter>
-        <About />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByTestId('about')).toBeInTheDocument();
-      expect(screen.getByTestId('spinner')).toBeInTheDocument();
-    });
+  it('should render character details', async () => {
+    vi.mocked(useGetPeopleQuery).mockReturnValueOnce({
+      error: true,
+    } as unknown as ReturnType<typeof useGetPeopleQuery>);
+    mockRouter(<About />);
+    expect(screen.getByText('REDIRECT')).toBeInTheDocument();
   });
 
-  it('list of props', async () => {
-    vi.mocked(getData).mockResolvedValueOnce(mockResults);
+  it('renders a list of films', async () => {
+    vi.mocked(useGetPeopleQuery).mockReturnValueOnce({
+      data: mockResults,
+    } as unknown as ReturnType<typeof useGetPeopleQuery>);
+    mockRouter(<About />);
 
-    render(
-      <MemoryRouter>
-        <About />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      expect(screen.getByText(':Luke')).toBeInTheDocument();
-      expect(screen.getByText(':male')).toBeInTheDocument();
-      expect(screen.getByText(':172')).toBeInTheDocument();
-      expect(screen.getByText(':77')).toBeInTheDocument();
-      expect(screen.getByText(':19BBY')).toBeInTheDocument();
-      expect(screen.getByText(':fair')).toBeInTheDocument();
-    });
-  });
-
-  it('list of films', async () => {
-    vi.mocked(getData).mockResolvedValueOnce(mockResults);
-
-    render(
-      <MemoryRouter>
-        <About />
-      </MemoryRouter>
-    );
-
-    await waitFor(() => {
-      const filmItems = screen.getAllByTestId('film');
-      expect(filmItems.length).toBe(2);
-      expect(filmItems[0]).toHaveTextContent('https://swapi.dev/api/films/1/');
-      expect(filmItems[1]).toHaveTextContent('https://swapi.dev/api/films/2/');
-    });
+    const filmElements = screen.getAllByTestId('film-component');
+    expect(filmElements.length).toBe(3);
   });
 });

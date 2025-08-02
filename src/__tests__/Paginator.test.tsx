@@ -1,60 +1,39 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/react';
-import Paginator from '../components/Paginator/Paginator';
-import { MemoryRouter } from 'react-router';
-import { mockPerson, mockState } from './mockData';
-import { act } from 'react';
+import { Paginator } from '../components';
+import { mockRouter } from './mockRouter';
 
-vi.mock('../helpers', () => ({
-  helper: {
-    useSearchParams: vi.fn(() => ({ search: 'testSearch' })),
-  },
+vi.mock(
+  '../store/Redux/api',
+  async (
+    importOriginal: () => Promise<typeof import('../store/Redux/api')>
+  ) => {
+    const actual = await importOriginal();
+    return {
+      ...actual,
+      useGetPeopleListQuery: vi.fn(() => ({
+        data: { count: 50, results: [] },
+        isLoading: false,
+        isFetching: false,
+        error: null,
+      })),
+    };
+  }
+);
+
+vi.mock('../components/CustomLink/CustomLink', () => ({
+  default: vi.fn(({ search }) => <div data-testid="custom-link">{search}</div>),
 }));
 
-const pageLinkMock = vi.fn();
-const renderWithRouter = (ui: React.ReactElement) => {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
-};
-
-describe('Paginator component', () => {
-  it('renders the paginator component', () => {
-    renderWithRouter(
-      <Paginator
-        {...mockState}
-        count={30}
-        previous={null}
-        next={null}
-        pageLink={pageLinkMock}
-      />
-    );
-    const paginator = screen.getByTestId('paginator');
-    expect(paginator).toBeInTheDocument();
+describe('Paginator Component', () => {
+  beforeEach(() => {
+    mockRouter(<Paginator />);
   });
 
-  it('renders the correct number of page links', () => {
-    renderWithRouter(
-      <Paginator {...mockState} {...mockPerson} pageLink={pageLinkMock} />
-    );
-    const pageLinks = screen.getAllByRole('link');
-    expect(pageLinks).toHaveLength(3);
+  it('render paginator', () => {
+    expect(screen.getByTestId('paginator')).toBeInTheDocument();
   });
 
-  it('calls pageLink function on page click', async () => {
-    renderWithRouter(
-      <Paginator
-        {...mockState}
-        count={30}
-        previous={null}
-        next={null}
-        pageLink={pageLinkMock}
-      />
-    );
-    const pageTwo = screen.getByText('2');
-
-    await act(async () => {
-      fireEvent.click(pageTwo);
-    });
-    await waitFor(() => {
-      expect(pageLinkMock).toHaveBeenCalledWith('?search=testSearch&page=2');
-    });
+  it('render links', () => {
+    const links = screen.getAllByTestId('custom-link');
+    expect(links).toHaveLength(7);
   });
 });

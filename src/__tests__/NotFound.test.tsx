@@ -1,21 +1,16 @@
-import { render, screen } from '@testing-library/react';
-import { MemoryRouter } from 'react-router';
-import NotFound from '../components/NotFound/NotFound';
-
-const renderWithRouter = (ui: React.ReactElement) => {
-  return render(<MemoryRouter>{ui}</MemoryRouter>);
-};
+import { NotFound } from '../components';
+import { mockRouter } from './mockRouter';
 
 describe('NotFound Component', () => {
   it('renders the Not Found message', () => {
-    renderWithRouter(<NotFound />);
+    mockRouter(<NotFound />);
     expect(
       screen.getByText('Sorry, the page is Not Found')
     ).toBeInTheDocument();
   });
 
   it('renders the GO HOME link', () => {
-    renderWithRouter(<NotFound />);
+    mockRouter(<NotFound />);
     const link = screen.getByText('GO HOME');
     expect(link).toBeInTheDocument();
     expect(link).toHaveAttribute('href', '/');

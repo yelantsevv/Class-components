@@ -1,15 +1,12 @@
-import { render } from '@testing-library/react';
-import Spinner from '../components/Spinner/Spinner';
+import { Spinner } from '../components';
+import { mockRouter } from './mockRouter';
 
-describe('Spinner component', () => {
-  it('renders without crashing', () => {
-    const { container } = render(<Spinner />);
-    expect(container.firstChild).toBeInTheDocument();
-  });
+describe('Spinner Component', () => {
+  it('renders correctly with the spinner element', () => {
+    mockRouter(<Spinner />);
 
-  it('has correct class from CSS module', () => {
-    const { container } = render(<Spinner />);
-    const div = container.querySelector('div');
-    expect(div?.className).toMatch(/spinner/);
+    const spinnerElement = screen.getByTestId('spinner');
+    expect(spinnerElement).toBeInTheDocument();
+    expect(spinnerElement.tagName).toBe('DIV');
   });
 });

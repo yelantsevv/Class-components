@@ -1,7 +1,10 @@
 @import '../../App.module.css';
 
 .cardList {
-  width: 100%;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 15px;
 }
 
 .pagination {

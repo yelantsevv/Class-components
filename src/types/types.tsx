@@ -29,12 +29,6 @@ export type Person = {
   results: Results[];
 };
 
-export type State = {
-  isLoading: boolean;
-  onSearch: (e: string) => void;
-  pageLink: (page: string) => void;
-} & Partial<Person>;
-
 export type Films = {
   title: string;
   opening_crawl: string;
@@ -53,7 +47,6 @@ export type Films = {
 
 export type CustomLinkProps = {
   search?: string;
-  pageLink: (page: string) => void;
   item: string | number;
 };
 
@@ -61,3 +54,10 @@ export type ErrorPageType = {
   error?: Error | null;
   reset?: () => void;
 };
+
+export type Theme = 'light' | 'dark';
+
+export type ThemeContextType = {
+  theme: Theme;
+  toggleTheme: () => void;
+} | null;
