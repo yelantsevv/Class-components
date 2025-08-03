@@ -49,6 +49,7 @@ export default function Selected() {
         filename={choice.length + '_items.csv'}
         data={choice}
         headers={headers}
+        separator={';'}
       >
         Download as CSV
       </CSVLink>
